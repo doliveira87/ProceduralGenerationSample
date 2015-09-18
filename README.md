@@ -15,3 +15,7 @@ I hope it may prove to be useful for someone!
 
 Best regards,
 Douglas L. Oliveira
+
+#External libs
+Random Number Generation code was found here http://www.csharpcity.com/reusable-code/random-number-generators/
+Unity-delaunay is a jceipek project found in https://github.com/jceipek/Unity-delaunay/
