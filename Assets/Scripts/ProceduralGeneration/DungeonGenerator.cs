@@ -124,6 +124,15 @@ public class DungeonGenerator : MonoBehaviour
     [SerializeField]
     private int debugTimeScale = 3;
 
+    [SerializeField]
+    private Color initialRandomRoomsColor = Color.white;
+    [SerializeField]
+    private Color secundaryRoomsColor = Color.blue;
+    [SerializeField]
+    private Color mainRoomsColor = Color.red;
+    [SerializeField]
+    private Color pathsColor = Color.green;
+
     private List<Room> allRooms;
     private List<Room> secundaryRooms;
     private List<Room> mainRooms;
@@ -837,52 +846,40 @@ public class DungeonGenerator : MonoBehaviour
 
     private void DrawDungeon()
     {
-
-        if (currentState == -1)
+        if (currentState == 0 || currentState == 1)
         {
             foreach (Room r in allRooms)
             {
-                DebugX.DrawRect(r.Rect, Color.white);
-            }
-            foreach (Room r in mainRooms)
-            {
-                DebugX.DrawRect(r.Rect, Color.red);
-            }
-        }
-        else if (currentState == 0 || currentState == 1)
-        {
-            foreach (Room r in allRooms)
-            {
-                DebugX.DrawRect(r.Rect, Color.white);
+                DebugX.DrawRect(r.Rect, initialRandomRoomsColor);
             }
         }
         else if (currentState == 2)
         {
             foreach (Room r in allRooms)
             {
-                DebugX.DrawRect(r.Rect, Color.white);
+                DebugX.DrawRect(r.Rect, initialRandomRoomsColor);
             }
             foreach (Room r in mainRooms)
             {
-                DebugX.DrawRect(r.Rect, Color.red);
+                DebugX.DrawRect(r.Rect, mainRoomsColor);
             }
         }
         else if (currentState == 3)
         {
             foreach (Room r in allRooms)
             {
-                DebugX.DrawRect(r.Rect, Color.white);
+                DebugX.DrawRect(r.Rect, initialRandomRoomsColor);
             }
             foreach (Room r in mainRooms)
             {
-                DebugX.DrawRect(r.Rect, Color.red);
+                DebugX.DrawRect(r.Rect, mainRoomsColor);
             }
 
             if (delaunayTriangulation != null)
             {
                 foreach (LineSegment l in delaunayTriangulation)
                 {
-                    Debug.DrawLine(new Vector3(l.p0.Value.x, l.p0.Value.y), new Vector3(l.p1.Value.x, l.p1.Value.y), Color.green);
+                    Debug.DrawLine(new Vector3(l.p0.Value.x, l.p0.Value.y), new Vector3(l.p1.Value.x, l.p1.Value.y), pathsColor);
                 }
             }
         }
@@ -890,18 +887,18 @@ public class DungeonGenerator : MonoBehaviour
         {
             foreach (Room r in allRooms)
             {
-                DebugX.DrawRect(r.Rect, Color.white);
+                DebugX.DrawRect(r.Rect, initialRandomRoomsColor);
             }
             foreach (Room r in mainRooms)
             {
-                DebugX.DrawRect(r.Rect, Color.red);
+                DebugX.DrawRect(r.Rect, mainRoomsColor);
             }
 
             if (spanningTree != null)
             {
                 foreach (LineSegment l in spanningTree)
                 {
-                    Debug.DrawLine(new Vector3(l.p0.Value.x, l.p0.Value.y), new Vector3(l.p1.Value.x, l.p1.Value.y), Color.green);
+                    Debug.DrawLine(new Vector3(l.p0.Value.x, l.p0.Value.y), new Vector3(l.p1.Value.x, l.p1.Value.y), pathsColor);
                 }
             }
         }
@@ -909,19 +906,19 @@ public class DungeonGenerator : MonoBehaviour
         {
             foreach (Room r in allRooms)
             {
-                DebugX.DrawRect(r.Rect, new Color(1f, 1f, 1f, 0.3f));
+                DebugX.DrawRect(r.Rect, new Color(initialRandomRoomsColor.r, initialRandomRoomsColor.g, initialRandomRoomsColor.b, 0.3f));
             }
 
             foreach (Room r in mainRooms)
             {
-                DebugX.DrawRect(r.Rect, Color.red);
+                DebugX.DrawRect(r.Rect, mainRoomsColor);
             }
 
             if (halls != null)
             {
                 foreach (Room r in halls)
                 {
-                    DebugX.DrawRect(r.Rect, Color.blue);
+                    DebugX.DrawRect(r.Rect, secundaryRoomsColor);
                 }
             }
         }
@@ -930,14 +927,14 @@ public class DungeonGenerator : MonoBehaviour
 
             foreach (Room r in mainRooms)
             {
-                DebugX.DrawRect(r.Rect, Color.red);
+                DebugX.DrawRect(r.Rect, mainRoomsColor);
             }
 
             if (halls != null)
             {
                 foreach (Room r in halls)
                 {
-                    DebugX.DrawRect(r.Rect, Color.blue);
+                    DebugX.DrawRect(r.Rect, secundaryRoomsColor);
                 }
             }
 
@@ -945,7 +942,7 @@ public class DungeonGenerator : MonoBehaviour
             {
                 foreach (Room s in secundaryRooms)
                 {
-                    DebugX.DrawRect(s.Rect, Color.blue);
+                    DebugX.DrawRect(s.Rect, secundaryRoomsColor);
                 }
             }
         }

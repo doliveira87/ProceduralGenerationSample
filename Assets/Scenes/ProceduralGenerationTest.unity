@@ -207,7 +207,11 @@ MonoBehaviour:
   maxSeparationIterations: 300
   percentageOfEdgesToReaddToSpanningTree: .150000006
   hallTickness: 2
-  debugTimeScale: 3
+  debugTimeScale: 1
+  initialRandomRoomsColor: {r: 1, g: 1, b: 1, a: 1}
+  secundaryRoomsColor: {r: .172549024, g: .356862754, b: .68235296, a: 1}
+  mainRoomsColor: {r: .90196079, g: .294117659, b: .298039228, a: 1}
+  pathsColor: {r: .155709341, g: .882352948, b: .155709341, a: 1}
 --- !u!4 &615827097
 Transform:
   m_ObjectHideFlags: 0
@@ -370,7 +374,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 200
+  orthographic size: 50
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
