@@ -64,16 +64,6 @@ public class DungeonGenerator : MonoBehaviour
     [SerializeField]
     private float minMainRoomHeight;
     /// <summary>
-    /// Use AABB separation or simple avoidance behavior for rooms separation?
-    /// </summary>
-    [SerializeField]
-    private bool useAABBSeparation;
-    /// <summary>
-    /// When using simple avoidance behavior, how much the rooms may separate from their neighbors in each iteration
-    /// </summary>
-    [SerializeField]
-    private float roomSeparationStepMultiplier;
-    /// <summary>
     /// Use normal distribution instead of linear randomicity
     /// </summary>
     [SerializeField]
@@ -140,6 +130,8 @@ public class DungeonGenerator : MonoBehaviour
     private List<LineSegment> delaunayTriangulation;
     private List<LineSegment> spanningTree;
     private List<RoomEdge> roomsConnections;
+    private List<GameObject> roomsColliders;
+    
     private Delaunay.Voronoi voronoi;
     private NormalRandomGenerator normalRandomGeneratorWidth;
     private NormalRandomGenerator normalRandomGeneratorHeight;
@@ -247,166 +239,167 @@ public class DungeonGenerator : MonoBehaviour
     private void SeparateRooms()
     {
         bool overlaps = true;
-        if (currentSeparationIteraction < maxSeparationIterations)
+        if (roomsColliders == null)
         {
-            overlaps = false;
-            roomSeparationStepMultiplier += roomSeparationStepMultiplier / (maxSeparationIterations / 6);
-            for (int i = 0; i < allRooms.Count; ++i)
+            roomsColliders = new List<GameObject>();
+            foreach (Room r in allRooms)
             {
-                for (int j = 0; j < allRooms.Count; ++j)
-                {
-                    if (i == j)
-                        continue;
-                    Room r = allRooms[j];
-                    Room r2 = allRooms[i];
-
-                    if (!useAABBSeparation)
-                    {
-                        if (allRooms[i].Overlaps(r))
-                        {
-                            overlaps = true;
-                            Vector2 centerDiff = r.center - allRooms[i].center;
-                            float xDiff = 0;
-                            float yDiff = 0;
-                            if (Mathf.Abs(centerDiff.x) >= Mathf.Abs(centerDiff.y))
-                            {
-                                xDiff = (r.position.x - allRooms[i].position.x) + Mathf.CeilToInt(centerDiff.x / 2);
-                            }
-                            else
-                            {
-                                yDiff = (r.position.y - allRooms[i].position.y) + Mathf.CeilToInt(centerDiff.y / 2);
-                            }
-                            Vector2 toAdd = new Vector2(xDiff, yDiff) * roomSeparationStepMultiplier;
-                            toAdd.x = Mathf.CeilToInt(toAdd.x);
-                            toAdd.y = Mathf.CeilToInt(toAdd.y);
-                            r.position += toAdd;
-                            allRooms[j] = r;
-                        }
-                    }
-                    else
-                    {
-                        if (allRooms[i].Overlaps(r))
-                        {
-                            overlaps = true;
-                            float xPenetration = 0;
-                            float yPenetration = 0;
-                            Vector2 normal = AABBvsAABB(r2, r, out xPenetration, out yPenetration);
-
-                            Vector2 toAdd = new Vector2(xPenetration / 2, yPenetration / 2);
-                            toAdd.x = Mathf.CeilToInt(toAdd.x);
-                            toAdd.y = Mathf.CeilToInt(toAdd.y);
-
-                            r.position += toAdd;
-                            r2.position -= toAdd;
-                            allRooms[j] = r;
-                            allRooms[i] = r2;
-                        }
-                    }
-                }
-            }
-            if (overlaps)
-            {
-                currentSeparationIteraction++;
-            }
-            else
-            {
-                currentSeparationIteraction = maxSeparationIterations;
+                GameObject roomCollider = new GameObject();
+                roomCollider.transform.position = r.center;
+                BoxCollider2D collider = roomCollider.AddComponent<BoxCollider2D>();
+                collider.size = r.size + Vector2.one * 2;
+                Rigidbody2D rigidbody = roomCollider.AddComponent<Rigidbody2D>();
+                rigidbody.gravityScale = 0;
+                rigidbody.constraints = RigidbodyConstraints2D.FreezeRotation;
+                rigidbody.drag = 1f;
+                rigidbody.sleepMode = RigidbodySleepMode2D.NeverSleep;
+                roomsColliders.Add(roomCollider);
             }
         }
         else
         {
-            //Remove rectangles that still overlaps another one
-            for (int i = 0; i < allRooms.Count; ++i)
+            if (currentSeparationIteraction < maxSeparationIterations)
             {
-                for (int j = i + 1; j < allRooms.Count; ++j)
+                currentSeparationIteraction++;
+
+                for (int i = 0; i < allRooms.Count; ++i)
                 {
-                    Room r = allRooms[j];
-                    if (allRooms[i].Overlaps(r))
+                    allRooms[i].center = MathUtils.Vec2ToInt(roomsColliders[i].transform.position);
+                }
+
+                overlaps = false;
+                for (int i = 0; i < allRooms.Count; ++i)
+                {
+                    for (int j = i + 1; j < allRooms.Count; ++j)
                     {
-                        allRooms.RemoveAt(j);
-                        j--;
+                        if (i == j)
+                            continue;
+                        Room r = allRooms[j];
+                        Room r2 = allRooms[i];
+
+                        if (r.Overlaps(r2))
+                        {
+                            overlaps = true;
+                            i = allRooms.Count;
+                            break;
+                        }
                     }
                 }
+
+                if (!overlaps)
+                {
+                    currentSeparationIteraction = maxSeparationIterations;
+                }
             }
-            currentState++;
+            else
+            {
+                //Remove rectangles that still overlaps another one
+                for (int i = 0; i < allRooms.Count; ++i)
+                {
+                    for (int j = i + 1; j < allRooms.Count; ++j)
+                    {
+                        Room r = allRooms[j];
+                        if (allRooms[i].Overlaps(r))
+                        {
+                            allRooms.RemoveAt(j);
+                            j--;
+                        }
+                    }
+                }
+                currentStateTime = 0;
+                currentState++;
+            }
         }
     }
 
-    //Room separation is bad. It was enough for my game and the time were too short :B (https://imgflip.com/i/r85qw)
-    private void SeparateRoomsSilently()
+    private void SeparateRoomsWithPhysicsSilently()
     {
         bool overlaps = true;
-        while (currentSeparationIteraction < maxSeparationIterations && overlaps)
-        {
-            roomSeparationStepMultiplier += roomSeparationStepMultiplier / (maxSeparationIterations / 6);
-            overlaps = false;
-            for (int i = 0; i < allRooms.Count; ++i)
-            {
-                for (int j = 0; j < allRooms.Count; ++j)
-                {
-                    if (i == j)
-                        continue;
-                    Room r = allRooms[j];
-                    Room r2 = allRooms[i];
 
-                    if (!useAABBSeparation)
+        if (roomsColliders == null)
+        {
+            roomsColliders = new List<GameObject>();
+            foreach (Room r in allRooms)
+            {
+                GameObject roomCollider = new GameObject();
+                roomCollider.transform.position = r.center;
+                BoxCollider2D collider = roomCollider.AddComponent<BoxCollider2D>();
+                collider.size = r.size + Vector2.one * 2;
+                Rigidbody2D rigidbody = roomCollider.AddComponent<Rigidbody2D>();
+                rigidbody.gravityScale = 0;
+                rigidbody.constraints = RigidbodyConstraints2D.FreezeRotation;
+                rigidbody.drag = 1f;
+                rigidbody.sleepMode = RigidbodySleepMode2D.NeverSleep;
+                roomsColliders.Add(roomCollider);
+            }
+        }
+        else
+        {
+            if (currentSeparationIteraction < maxSeparationIterations)
+            {
+                for (int i = 0; i < allRooms.Count; ++i)
+                {
+                    allRooms[i].center = MathUtils.Vec2ToInt(roomsColliders[i].transform.position);
+                }
+                overlaps = false;
+                for (int i = 0; i < allRooms.Count; ++i)
+                {
+                    for (int j = 0; j < allRooms.Count; ++j)
                     {
-                        if (allRooms[i].Overlaps(r))
+                        if (i == j)
+                            continue;
+                        Room r = allRooms[j];
+                        Room r2 = allRooms[i];
+
+                        if (r.Overlaps(r2))
                         {
                             overlaps = true;
-                            Vector2 centerDiff = r.center - allRooms[i].center;
-                            float xDiff = 0;
-                            float yDiff = 0;
-                            if (Mathf.Abs(centerDiff.x) >= Mathf.Abs(centerDiff.y))
-                            {
-                                xDiff = (r.position.x - allRooms[i].position.x) + Mathf.CeilToInt(centerDiff.x / 2);
-                            }
-                            else
-                            {
-                                yDiff = (r.position.y - allRooms[i].position.y) + Mathf.CeilToInt(centerDiff.y / 2);
-                            }
-
-                            Vector2 toAdd = new Vector2(xDiff, yDiff) * roomSeparationStepMultiplier;
-                            toAdd.x = Mathf.CeilToInt(toAdd.x);
-                            toAdd.y = Mathf.CeilToInt(toAdd.y);
-                            r.position += toAdd; //Time.fixedDeltaTime;
-                            allRooms[j] = r;
+                            i = allRooms.Count;
+                            break;
                         }
                     }
-                    else
+                }
+
+                currentSeparationIteraction++;
+
+                if (!overlaps)
+                {
+                    currentSeparationIteraction = maxSeparationIterations;
+
+                    //Remove rectangles that still overlaps another one
+                    for (int i = 0; i < allRooms.Count; ++i)
                     {
-                        if (allRooms[i].Overlaps(r))
+                        for (int j = i + 1; j < allRooms.Count; ++j)
                         {
-                            overlaps = true;
-                            float xPenetration = 0;
-                            float yPenetration = 0;
-                            Vector2 normal = AABBvsAABB(r2, r, out xPenetration, out yPenetration);
-                            r.position += new Vector2(xPenetration / 2, yPenetration / 2);
-                            r2.position -= new Vector2(xPenetration / 2, yPenetration / 2);
-                            allRooms[j] = r;
-                            allRooms[i] = r2;
+                            Room r = allRooms[j];
+                            if (allRooms[i].Overlaps(r))
+                            {
+                                allRooms.RemoveAt(j);
+                                j--;
+                            }
                         }
                     }
                 }
             }
-            currentSeparationIteraction++;
-        }
 
-        //Remove rectangles that still overlaps another one
-        for (int i = 0; i < allRooms.Count; ++i)
-        {
-            for (int j = i + 1; j < allRooms.Count; ++j)
+            if (currentSeparationIteraction >= maxSeparationIterations)
             {
-                Room r = allRooms[j];
-                if (allRooms[i].Overlaps(r))
+                //Remove rectangles that still overlaps another one
+                for (int i = 0; i < allRooms.Count; ++i)
                 {
-                    allRooms.RemoveAt(j);
-                    j--;
+                    for (int j = i + 1; j < allRooms.Count; ++j)
+                    {
+                        Room r = allRooms[j];
+                        if (allRooms[i].Overlaps(r))
+                        {
+                            allRooms.RemoveAt(j);
+                            j--;
+                        }
+                    }
                 }
             }
         }
     }
-
 
     private void UpdateMapRect(Rect r)
     {
@@ -754,6 +747,7 @@ public class DungeonGenerator : MonoBehaviour
             }
             else if (currentState == 2)
             {
+                RemoveRoomsColliders();
                 if (currentStateTime == 0)
                 {
                     SelectMainRooms();
@@ -1001,16 +995,32 @@ public class DungeonGenerator : MonoBehaviour
     }
 
     //The method that generates a room directly without printing steps.
-    public void GenerateDungeon()
+    public System.Collections.IEnumerator GenerateDungeon()
     {
         AddRooms();
-        SeparateRoomsSilently();
+		Time.timeScale = 5;
+        while (currentSeparationIteraction < maxSeparationIterations)
+        {
+            SeparateRoomsWithPhysicsSilently();
+            yield return new WaitForEndOfFrame();
+        }
+        RemoveRoomsColliders();
+        Time.timeScale = 1;
         SelectMainRooms();
         DelaunayTriangulation();
         GetSpanningTree();
         AddBackEdgesToSpanningTree();
         CreateHalls();
         ReAddSecundaryRooms();
+    }
+
+    public void RemoveRoomsColliders()
+    {
+        while (roomsColliders.Count > 0)
+        {
+            GameObject.Destroy(roomsColliders[0].gameObject);
+            roomsColliders.RemoveAt(0);
+        }
     }
 
     #endregion //Methods
