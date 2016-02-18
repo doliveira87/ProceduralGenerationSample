@@ -109,6 +109,11 @@ public class DungeonGenerator : MonoBehaviour
     [SerializeField]
     private int hallTickness;
     /// <summary>
+    /// Enables debug mode.
+    /// </summary>
+    [SerializeField]
+    private bool debugMode = false;
+    /// <summary>
     /// Just sets Time.scale to be faster or slower
     /// </summary>
     [SerializeField]
@@ -170,7 +175,14 @@ public class DungeonGenerator : MonoBehaviour
             normalRandomGeneratorHeight.StandardDeviation = heightNormalRandomStandardDeviation;
         }
 
-        Time.timeScale = debugTimeScale;
+        if (debugMode)
+        {
+            Time.timeScale = debugTimeScale;
+        }
+        else
+        {
+            StartCoroutine(GenerateDungeon());
+        }
     }
 
     private void AddRoom()
@@ -235,7 +247,6 @@ public class DungeonGenerator : MonoBehaviour
         }
     }
 
-    //Room separation is bad. It was enough for my game and the time were too short :B (https://imgflip.com/i/r85qw)
     private void SeparateRooms()
     {
         bool overlaps = true;
@@ -724,6 +735,7 @@ public class DungeonGenerator : MonoBehaviour
 #if UNITY_EDITOR
     void FixedUpdate()
     {
+        if(debugMode)
         {
             if (currentState == 0) //if adding rooms
             {
@@ -829,11 +841,21 @@ public class DungeonGenerator : MonoBehaviour
 
     void Update()
     {
-        DrawDungeon();
-
-        if (Input.GetMouseButtonUp(0))
+        if (debugMode)
         {
-            Application.LoadLevel(Application.loadedLevel);
+            DrawDungeon();
+
+            if (Input.GetMouseButtonUp(0))
+            {
+                Application.LoadLevel(Application.loadedLevel);
+            }
+        }
+        else
+        {
+            if (mainRooms.Count > 0)
+            {
+                DrawDungeon();
+            }
         }
     }
 #endif

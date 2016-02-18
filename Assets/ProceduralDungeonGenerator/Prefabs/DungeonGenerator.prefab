@@ -58,6 +58,7 @@ MonoBehaviour:
   maxSeparationIterations: 300
   percentageOfEdgesToReaddToSpanningTree: 0.35
   hallTickness: 2
+  debugMode: 1
   debugTimeScale: 1
   initialRandomRoomsColor: {r: 1, g: 1, b: 1, a: 1}
   secundaryRoomsColor: {r: 0.17254902, g: 0.35686275, b: 0.68235296, a: 1}
