@@ -152,6 +152,12 @@ public class DungeonGenerator : MonoBehaviour
     #endregion //Step-by-step generation stuff
 
     #region Methods
+
+    void Awake()
+    {
+        IsDone = false;
+    }
+
     void Start()
     {
         allRooms = new List<Room>();
@@ -1027,6 +1033,7 @@ public class DungeonGenerator : MonoBehaviour
         AddBackEdgesToSpanningTree();
         CreateHalls();
         ReAddSecundaryRooms();
+        IsDone = true;
     }
 
     public void RemoveRoomsColliders()
@@ -1063,6 +1070,14 @@ public class DungeonGenerator : MonoBehaviour
     }
 
     #endregion //Methods
+
+    #region Properties
+    public bool IsDone
+    {
+        get;
+        private set;
+    }
+    #endregion
 }
 
 public class RoomEdge
