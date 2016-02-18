@@ -850,13 +850,6 @@ public class DungeonGenerator : MonoBehaviour
                 Application.LoadLevel(Application.loadedLevel);
             }
         }
-        else
-        {
-            if (mainRooms.Count > 0)
-            {
-                DrawDungeon();
-            }
-        }
     }
 #endif
 
@@ -1043,6 +1036,30 @@ public class DungeonGenerator : MonoBehaviour
             GameObject.Destroy(roomsColliders[0].gameObject);
             roomsColliders.RemoveAt(0);
         }
+    }
+
+    public List<Room> GetResultantRooms()
+    {
+        List<Room> rooms = new List<Room>(mainRooms);
+        rooms.AddRange(secundaryRooms);
+        rooms.AddRange(halls);
+
+        return rooms;
+    }
+
+    public List<Room> GetResultantMainRooms()
+    {
+        return mainRooms;
+    }
+
+    public List<Room> GetResultantSecundaryRooms()
+    {
+        return secundaryRooms;
+    }
+
+    public List<Room> GetResultantHalls()
+    {
+        return halls;
     }
 
     #endregion //Methods
